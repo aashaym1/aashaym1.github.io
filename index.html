@@ -1,137 +1,155 @@
-<!DOCTYPE HTML>
-<html>
-	<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Aashay Maheshwarkar</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="" />
-	<meta name="keywords" content="" />
-	<meta name="author" content="" />
+<!-- DOCTYPE html -->
+<!DOCTYPE html>
+<html lang="en">
 
-  <!-- Facebook and Twitter integration -->
-	<meta property="og:title" content=""/>
-	<meta property="og:image" content=""/>
-	<meta property="og:url" content=""/>
-	<meta property="og:site_name" content=""/>
-	<meta property="og:description" content=""/>
-	<meta name="twitter:title" content="" />
-	<meta name="twitter:image" content="" />
-	<meta name="twitter:url" content="" />
-	<meta name="twitter:card" content="" />
+  <head>
+    <title id="main_title">Alternative Fuel Stations in the U.S.</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="v6.1.1-dist/ol.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,500;1,600;1,700;1,800;1,900&display=swap"
+          rel="stylesheet">
 
-	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-	<link rel="shortcut icon" href="favicon.ico">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="v6.1.1-dist/ol.js"></script>
+  </head>
 
-	<link href="https://fonts.googleapis.com/css?family=Quicksand:300,400,500,700" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,400i,700" rel="stylesheet">
-	
-	<!-- Animate.css -->
-	<link rel="stylesheet" href="css/animate.css">
-	<!-- Icomoon Icon Fonts-->
-	<link rel="stylesheet" href="css/icomoon.css">
-	<!-- Bootstrap  -->
-	<link rel="stylesheet" href="css/bootstrap.css">
-	<!-- Flexslider  -->
-	<link rel="stylesheet" href="css/flexslider.css">
-	<!-- Flaticons  -->
-	<link rel="stylesheet" href="fonts/flaticon/font/flaticon.css">
-	<!-- Owl Carousel -->
-	<link rel="stylesheet" href="css/owl.carousel.min.css">
-	<link rel="stylesheet" href="css/owl.theme.default.min.css">
-	<!-- Theme style  -->
-	<link rel="stylesheet" href="css/style.css">
+  <body>
+    <h2 class="viz-title center" id="main_title_h2">Alternative Fuel Station Construction in the U.S.</h2>
+    <div style="float: left">
+      <div id="stations-over-time-viz"></div>
+      <br/>
+      <h3 id="year-label" class="center">2020 - 2021</h3>
+      <br/>
+    </div>
+    
+    <div style="float: right">
+      <input type="checkbox" name="type" id="accum" value="accumulating" onclick={accumulation_check()}> <span id="accumulating">Accumulating to 2021</span>
+      <input type="checkbox" name="type" id="showing_usa_data" value="showing_usa_data" onclick={usa_data_check()} checked> Showing Entire USA
 
-	<!-- Modernizr JS -->
-	<script src="js/modernizr-2.6.2.min.js"></script>
-	<!-- FOR IE9 below -->
-	<!--[if lt IE 9]>
-	<script src="js/respond.min.js"></script>
-	<![endif]-->
+      <div id="bar-chart"></div>
+    </div>
 
-	</head>
-	<body>
-	<div id="colorlib-page">
-		<div class="container-wrap">
-		<a href="#" class="js-colorlib-nav-toggle colorlib-nav-toggle" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar"><i></i></a>
-		<aside id="colorlib-aside" role="complementary" class="border js-fullheight">
-			<div class="text-center">
-				<div class="author-img" style="background-image: url(images/about.jpg);"></div>
-				<h1 id="colorlib-logo"><a href="index.html">Aashay Maheshwarkar</a></h1>
-				<span class="position"><a href="#">Masters Student pursuing Computer Science</a> at Utah State University</span>
-		
-			</div>
-			<nav id="colorlib-main-menu" role="navigation" class="navbar">
-				<div id="navbar" class="collapse">
-					<ul>
-						<li class="active"><a href="#" data-nav-section="home"></a></li>
-						
-					</ul>
-				</div>
-			</nav>
+    <div style="position:absolute; top: 700px;" id="division">
 
-			<div class="colorlib-footer">
-			 This Website is made with <i class="icon-heart" ></i> by <a href="https://aashaym1.github.io" target="_blank">Aashay</a>
-				<ul>
-					<li><a href="#"><i class="icon-facebook2"></i></a></li>
-					<li><a href="#"><i class="icon-twitter2"></i></a></li>
-					<li><a href="#"><i class="icon-instagram blackiconcolor"></i></a></li>
-					<li><a href="#"><i class="icon-linkedin2"></i></a></li>
-				</ul>
-			</div>
+      <h3 id="construction_h3">Yearly construction for the U.S.</h3>
+      <div id="time-control-slider">
+      </div>
+      <h3 id="policy_h3">New Policy for the U.S.</h3>
+      <div id="law_linear_graph"></div>
+      <br/>
+      <h1>With OpenLayers</h1>
+      <label for="vis_metric">Choose a Visualization Metric:</label>
+      <select name="vis_metric" id="vis_metric">
+        <option value="hours">Popularity (Hours)</option>
+        <option value="visits">Visits (Day)</option>
+      </select>
+      <input type="submit" value="Submit" onclick="drawStations()">
+      <br>
+      <text>Selected Place Name:   </text>
+      <text id="Place_id">N/A</text>
+      <text>Metric Value:   </text>
+      <text id="metric_value">N/A</text>
+      <br/>
+      <div style="float:left">
+        <label for="poi_hour">Time for Visualization:</label>
+        <input type="range" id="poi_hour" name="poi_hour" min="1" max="24" onchange="drawStations();setText(this.value);">
+        <text id="hour_vis">10:00</text>
+      </div>
+      <div style="float:left; visibility: hidden" class="loader" id="loader"></div>
+      <br/>
+      <br/>
+      <div style="float:left">
+      <div class="center">
+        <input type="checkbox" class ="fuel_type" id="cng" name="cng" value="cng">
+        <label id="cng_label" class="checkbox-label" for="cng">CNG</label>
+        <input type="checkbox" class ="fuel_type" id="lng" name="lng" value="lng">
+        <label id="lng_label" class="checkbox-label" for="lng">LNG</label>
+        <input type="checkbox" class ="fuel_type" id="lpg" name="lpg" value="lpg">
+        <label id="lpg_label" class="checkbox-label" for="lpg">LPG</label>
+        <input type="checkbox" class ="fuel_type" id="e85" name="e85" value="e85">
+        <label id="e85_label" class="checkbox-label" for="e85">E85</label>
+        <input type="checkbox" class ="fuel_type" id="bd" name="bd" value="bd">
+        <label id="bd_label" class="checkbox-label" for="bd">Biodiesel</label>
+        <input type="checkbox" class ="fuel_type" id="elec" name="elec" value="elec">
+        <label id="elec_label" class="checkbox-label" for="elec">Electricity</label>
+        <input type="checkbox" class ="fuel_type" id="hy" name="hy" value="hy">
+        <label id="hy_label" class="checkbox-label" for="hy">Hydrogen</label>
+        <button type="button" id="USA_button" onclick="init()">Entire USA</button>
+      </div>
+      </div>
+      <div class="popup" id="popup">
+        <span class="popuptext" id="myPopup">Popup text...</span>
+      </div>
+      <div style="float:right">
+        <h3>Metrics to show</h3>
+          <input type="checkbox" id="population" name="cng" value="population">
+          <label id="population_label" class="checkbox-label-metric" for="cng">Population(Pop)</label>
+        <br>
+          <input type="checkbox" id="race" name="lng" value="race">
+          <label id="race_label" class="checkbox-label-metric" for="lng">Race</label>
+        <br>
+          <input type="checkbox" id="age" name="lpg" value="age">
+          <label id="age_label" class="checkbox-label-metric" for="lpg">Age</label>
+        <br>
+          <input type="checkbox" id="sex" name="e85" value="sex">
+          <label id="sex_label" class="checkbox-label-metric" for="e85">Sex</label>
+        <br>
+          <input type="checkbox" id="poverty" name="bd" value="lowincome_fpl_pct">
+          <label id="poverty_label" class="checkbox-label-metric" for="bd">Poverty(Pvr)</label>
+        <br>
+          <input type="checkbox" id="cancer" name="elec" value="ej_cancer">
+          <label id="cancer_label" class="checkbox-label-metric" for="elec">Cancer Risk(Crk)</label>
+        <br>
+          <input type="checkbox" id="food" name="hy" value="food_desert_pct">
+          <label id="food_label" class="checkbox-label-metric" for="hy">Food Desert(Fdt)</label>
+        <br>
+        <input type="checkbox" id="unemployment" name="hy" value="unemployed_pct">
+        <label id="unemployment_label" class="checkbox-label-metric" for="hy">Unemployment Percentage(Upc)</label>
+        <br>
+        <input type="checkbox" id="income" name="hy" value="lowincome_ami_pct">
+        <label id="income_label" class="checkbox-label-metric" for="hy">Income</label>
+        <br>
+        <input type="checkbox" id="homeless" name="hy" value="unhoused_pct">
+        <label id="homeless_label" class="checkbox-label-metric" for="hy">Homeless Percentage(Hlp)</label>
+        <br>
+        <input type="checkbox" id="housing" name="hy" value="avg_housing_burden">
+        <label id="housing_label" class="checkbox-label-metric" for="hy">Housing Cost(Hoc)</label>
+        <br>
+      </div>
+      <div id="js-map" class="map">
+      </div>
+      </div>
+    <div class="overlay-container">
 
-		</aside>
+    </div>
+<!--    <br/>-->
+<!--    <br/>-->
+<!--    <br/>-->
+<!--    <br/>-->
+<!--    <br/>-->
+<!--    <hr />-->
+<!--    <br/>-->
+<!--    <br/>-->
+<!--    <h2 class="viz-title center">Laws and Incentives Regarding Alternative Fuels Over the Years</h2>-->
+<!--    <div class="center">-->
+<!--      <h3 style="display: inline;background: #1f77b4;color: white">CNG</h3>-->
+<!--      <h3 style="display: inline;background: #2ca02c;color: white">LPG</h3>-->
+<!--      <h3 style="display: inline;background: #d62728;color: white">E85</h3>-->
+<!--      <h3 style="display: inline;background: #9467bd;color: white">Biodiesel</h3>-->
+<!--      <h3 style="display: inline;background: #8c564b;color: white">Electric</h3>-->
+<!--      <h3 style="display: inline;background: #e377c2;color: white">Hydrogen</h3>-->
+<!--    </div>-->
+<!--    <div id="laws-viz"></div>-->
 
-		<div id="colorlib-main">
-			<section id="colorlib-hero" class="js-fullheight" data-section="home">
-				<div class="flexslider js-fullheight">
-					<ul class="slides">
-				   	<li style="background-image: url(images/bg_4.jpg);">
-				   		<div class="overlay"></div>
-				   		<div class="container-fluid">
-				   			<div class="row">
-					   			<div class="col-md-6 col-md-offset-3 col-md-pull-3 col-sm-12 col-xs-12 js-fullheight slider-text">
-					   				<div class="slider-text-inner js-fullheight">
-					   					<div class="desc">
-						   					<h1>Hi! <br>I'm Aashay</h1>
-												<p><a  class="btn btn-primary btn-learn" href="Aashay_Resume_20_September_2022 (1).pdf" download="Aashay_Resume">Download CV <i class="icon-download4"></i></a></p>
-												</div>
-					   				</div>
-					   			</div>
-					   		</div>
-				   		</div>
-				   	</li>
-			</section>
-
-			
-
-			
-						
-			
-			
-		</div><!-- end:colorlib-main -->
-	</div><!-- end:container-wrap -->
-	</div><!-- end:colorlib-page -->
-
-	<!-- jQuery -->
-	<script src="js/jquery.min.js"></script>
-	<!-- jQuery Easing -->
-	<script src="js/jquery.easing.1.3.js"></script>
-	<!-- Bootstrap -->
-	<script src="js/bootstrap.min.js"></script>
-	<!-- Waypoints -->
-	<script src="js/jquery.waypoints.min.js"></script>
-	<!-- Flexslider -->
-	<script src="js/jquery.flexslider-min.js"></script>
-	<!-- Owl carousel -->
-	<script src="js/owl.carousel.min.js"></script>
-	<!-- Counters -->
-	<script src="js/jquery.countTo.js"></script>
-	
-	
-	<!-- MAIN JS -->
-	<script src="js/main.js"></script>
-
-	</body>
+    <script src="geoDataProcessing.js"></script>
+    <script src="viz.js"></script>
+    <script src="time-control-slider.js"></script>
+    <script src="bar_chart.js"></script>
+    <script src="pop_up_display.js"></script>
+<!--    <script src="laws.js"></script>-->
+  </body>
 </html>
-

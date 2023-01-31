@@ -798,8 +798,8 @@ function drawStations() {
             return feature;
         });
     });
-    // draw_bar_chart();
-    // chnage_accumulate_year();
+     draw_bar_chart();
+     chnage_accumulate_year();
     let milliseconds_end = (new Date()).getTime();
     console.log("time taken was "+(milliseconds_end-milliseconds_start)/1000+" seconds!");
 }
@@ -1411,15 +1411,15 @@ function init_for_map(){
             return feature;
         });
     });
-    // draw_bar_chart();
-    // chnage_accumulate_year();
+    draw_bar_chart();
+    chnage_accumulate_year();
 }
 function init() {
     document.getElementById("poi_hour").defaultValue = "10";
     getMapData("USA").then(() => {
             current_showing_data_name = "USA";
             current_showing_state_postal = "USA";
-            //drawMap();
+            drawMap();
            // init_for_map();
             drawStations();
             document.getElementById("main_title_h2").innerHTML = "Alternative Fuel Stations Construction in the U.S.";

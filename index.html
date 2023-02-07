@@ -51,8 +51,8 @@
       <br>
       <text>Selected Place Name:   </text>
       <text id="Place_id">N/A</text>
-      <text>Metric Value:   </text>
-      <text id="metric_value">N/A</text>
+<!--      <text>Metric Value:   </text>-->
+<!--      <text id="metric_value">N/A</text>-->
       <br/>
       <div style="float:left">
         <label for="poi_hour">Time for Visualization:</label>
@@ -85,38 +85,38 @@
         <span class="popuptext" id="myPopup">Popup text...</span>
       </div>
       <div style="float:right">
-        <h3>Metrics to show</h3>
-          <input type="checkbox" id="population" name="cng" value="population">
-          <label id="population_label" class="checkbox-label-metric" for="cng">Population(Pop)</label>
+        <h3>Metric to show</h3>
+          <input type="radio" id="population" name="metric" value="population" onclick="drawStations()">
+          <label id="population_label" class="checkbox-label-metric" for="cng">Population</label>
+<!--        <br>-->
+<!--          <input type="radio" id="race" name="metric" value="race">-->
+<!--          <label id="race_label" class="checkbox-label-metric" for="lng">Race</label>-->
         <br>
-          <input type="checkbox" id="race" name="lng" value="race">
-          <label id="race_label" class="checkbox-label-metric" for="lng">Race</label>
+          <input type="radio" id="age" name="metric" value="over64pct" onclick="drawStations()">
+          <label id="age_label" class="checkbox-label-metric" for="lpg">People Over 64</label>
+<!--        <br>-->
+<!--          <input type="radio" id="sex" name="metric" value="sex">-->
+<!--          <label id="sex_label" class="checkbox-label-metric" for="e85">Sex</label>-->
         <br>
-          <input type="checkbox" id="age" name="lpg" value="age">
-          <label id="age_label" class="checkbox-label-metric" for="lpg">Age</label>
-        <br>
-          <input type="checkbox" id="sex" name="e85" value="sex">
-          <label id="sex_label" class="checkbox-label-metric" for="e85">Sex</label>
-        <br>
-          <input type="checkbox" id="poverty" name="bd" value="lowincome_fpl_pct">
+          <input type="radio" id="poverty" name="metric" value="lowincfpct" onclick="drawStations()">
           <label id="poverty_label" class="checkbox-label-metric" for="bd">Poverty(Pvr)</label>
         <br>
-          <input type="checkbox" id="cancer" name="elec" value="ej_cancer">
+          <input type="radio" id="cancer" name="metric" value="cancer" onclick="drawStations()">
           <label id="cancer_label" class="checkbox-label-metric" for="elec">Cancer Risk(Crk)</label>
         <br>
-          <input type="checkbox" id="food" name="hy" value="food_desert_pct">
+          <input type="radio" id="food" name="metric" value="foodsrtpct" onclick="drawStations()">
           <label id="food_label" class="checkbox-label-metric" for="hy">Food Desert(Fdt)</label>
         <br>
-        <input type="checkbox" id="unemployment" name="hy" value="unemployed_pct">
+        <input type="radio" id="unemployment" name="metric" value="unemppct" onclick="drawStations()">
         <label id="unemployment_label" class="checkbox-label-metric" for="hy">Unemployment Percentage(Upc)</label>
         <br>
-        <input type="checkbox" id="income" name="hy" value="lowincome_ami_pct">
+        <input type="radio" id="income" name="metric" value="incplmbpct" onclick="drawStations()">
         <label id="income_label" class="checkbox-label-metric" for="hy">Income</label>
         <br>
-        <input type="checkbox" id="homeless" name="hy" value="unhoused_pct">
+        <input type="radio" id="homeless" name="metric" value="homelespct" onclick="drawStations()">
         <label id="homeless_label" class="checkbox-label-metric" for="hy">Homeless Percentage(Hlp)</label>
         <br>
-        <input type="checkbox" id="housing" name="hy" value="avg_housing_burden">
+        <input type="radio" id="housing" name="metric" value="housebrdn" onclick="drawStations()">
         <label id="housing_label" class="checkbox-label-metric" for="hy">Housing Cost(Hoc)</label>
         <br>
       </div>

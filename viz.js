@@ -13,6 +13,48 @@ let myExtent = [
     5097419.815963253
 ];
 
+function divideArray(array, numOfPartitions) {
+    const frequencyMap = {};
+    const partitions = [];
+
+    // Count frequency of each element in the array
+    array.forEach(element => {
+        if (!frequencyMap[element]) {
+            frequencyMap[element] = 1;
+        } else {
+            frequencyMap[element]++;
+        }
+    });
+
+    // Sort the elements based on frequency
+    const sortedArray = array.sort((a, b) => frequencyMap[a] - frequencyMap[b]);
+
+    // Calculate target frequency
+    const targetFrequency = array.length / numOfPartitions;
+
+    // Create partitions
+    let partitionIndex = 0;
+    while (sortedArray.length > 0) {
+        if (!partitions[partitionIndex]) {
+            partitions[partitionIndex] = [];
+        }
+
+        const currentElement = sortedArray.shift();
+        partitions[partitionIndex].push(currentElement);
+        frequencyMap[currentElement]--;
+
+        if (partitions[partitionIndex].length === targetFrequency) {
+            partitionIndex++;
+        }
+
+        if (frequencyMap[currentElement] === 0) {
+            delete frequencyMap[currentElement];
+        }
+    }
+
+    return partitions;
+}
+
 let center=ol.proj.fromLonLat([-111.0937, 39.3210]);
 let zoom=7.7;
 
@@ -296,13 +338,62 @@ function drawStations() {
     let shp_start = (new Date()).getTime();
     console.table(data)
     let shp_features=tile_data;
-    console.table(shp_features);
+    let min_scale=0;
+    let max_scale=0;
+    console.log(shp_features.features);
+    let array_metrics=[];
+    let thing=0;
+    let selected_metric='';
+    $('input:radio').each(function () {
+                if($(this).is(':checked'))
+                    selected_metric=$(this).val();
+        })
+    // for(i = 0; i < ele.length; i++) {
+    //     console.log(ele[i]+"the element");
+    //         if(ele[i].checked)
+    //             selected_metric=ele[i].value;
+    // }
+    console.log(selected_metric+"The selected metric");
+    for(thing=0;thing<shp_features.features.length;thing++){
+        if(max_scale<shp_features.features[thing].properties[selected_metric])
+            max_scale=shp_features.features[thing].properties[selected_metric];
+        array_metrics.push(shp_features.features[thing].properties[selected_metric]);
+    }
+    array_metrics.sort();
+let hashmap_metrics={};
+    for(thing=array_metrics.length-1;thing>=0;thing--){
+        let val=array_metrics[thing];
+        hashmap_metrics[val]=thing;
+    }
     let shpSource = new ol.source.Vector({
         url:'data/utah_shapefile.geojson',
         format: new ol.format.GeoJSON()
     });
+    let intensities=['#FFF',
+    '#ADD8E6',
+'#1E90FF', '#0077BE',
+'#0B3D91']
     let shpLayer = new ol.layer.Vector({
-        source: shpSource
+        source: shpSource,
+        style: function(feature) {
+            let color='gray';
+            let value = feature.values_[selected_metric];
+            if(hashmap_metrics[value]/array_metrics.length<=0.2)
+                color='rgba(0,0,255,0.2)';
+            else if(hashmap_metrics[value]/array_metrics.length<=0.4)
+                color='rgba(0,0,255,0.4)';
+            else if(hashmap_metrics[value]/array_metrics.length<=0.6)
+                color='rgba(0,0,255,0.6)';
+            else if(hashmap_metrics[value]/array_metrics.length<=0.8)
+                color='rgba(0,0,255,0.8)';
+else if(hashmap_metrics[value]/array_metrics.length>0.8)
+    color='rgba(0,0,255,1)';
+            return new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: color
+                })
+            });
+        }
     });
     let shp_end = (new Date()).getTime();
     console.log("Time taken to add Shape Layer points to array was: "+(shp_end-shp_start)/1000+" seconds");
@@ -325,6 +416,7 @@ function drawStations() {
             maximum_visits=hourwise_array[hour];
     }
     const poi_features=[];
+    let poi_array=[];
     const lpg_features = [];
     const elec_features = [];
     const hy_features = [];
@@ -332,48 +424,61 @@ function drawStations() {
     const e85_features = [];
     const lng_features = [];
     const cng_features = [];
-    svg_map.selectAll('circle').data(data1).enter().append('circle').attr('class',function(d){
-        let pf=new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([d.longitude, d.latitude])),
-            name: d.location_name_x,
-            category: d.top_category,
-            city: ""+d.city_x,
-        })
-        // pf.setStyle(
-        //     new ol.style.Style({
-        //     image: new ol.style.Circle({
-        //         radius: (+d.popularity_by_hour[hour-1])/4,
-        //         fill: new ol.style.Fill({color: '#000'})
-        //     })
-        // })
-        // )
-        //code to be copied start
-        if(metric==="hours")
-        hourwise_string=d.popularity_by_hour.substring(1,d.popularity_by_hour.length-1);
+    for (thing=data1.length-1;thing>-1;thing--){
         if(metric==="visits")
-            hourwise_string=d.visits_by_day.substring(1,d.visits_by_day.length-1);
+            hourwise_string=data1[thing]['visits_by_day'].substring(1,data1[thing]['visits_by_day'].length-1);
+        if(metric==="hours")
+            hourwise_string=data1[thing]['popularity_by_hour'].substring(1,data1[thing]['popularity_by_hour'].length-1);
         const hourwise_array = hourwise_string.split(",");
-
-        try{features_arr[Math.floor(hourwise_array[hour]*(rows-1)/(maximum_visits))].push(pf);}
-        catch(err){
-            console.log(Math.floor(hourwise_array[hour]*(rows-1)/(maximum_visits)));
-        }
-        // pf.setStyle(
-        //     new ol.style.Style({
-        //         image: new ol.style.RegularShape({
-        //             radius: Math.pow((+hourwise_array[hour]+1),1/3),
-        //             points:3,
-        //             angle: 0,
-        //             stroke:new ol.style.Stroke({color: '#000'}),
-        //             fill: new ol.style.Fill({color: '#FFF'})
-        //         })
-        //     })
-        // )
-        //code to be copied end
-        //
-        // poi_features.push(pf);
-        return 'circle';
-    })
+        poi_array.push(hourwise_array[hour]);
+    }
+    poi_array.sort();
+    let hashed_poi_indices={};
+    for (let thing=poi_array.length-1;thing>=0;thing--){
+        hashed_poi_indices[poi_array[thing]]=thing;
+    }
+    // svg_map.selectAll('circle').data(data1).enter().append('circle').attr('class',function(d){
+    //     let pf=new ol.Feature({
+    //         geometry: new ol.geom.Point(ol.proj.fromLonLat([d.longitude, d.latitude])),
+    //         name: d.location_name_x,
+    //         category: d.top_category,
+    //         city: ""+d.city_x,
+    //     })
+    //     // pf.setStyle(
+    //     //     new ol.style.Style({
+    //     //     image: new ol.style.Circle({
+    //     //         radius: (+d.popularity_by_hour[hour-1])/4,
+    //     //         fill: new ol.style.Fill({color: '#000'})
+    //     //     })
+    //     // })
+    //     // )
+    //     //code to be copied start
+    //     if(metric==="hours")
+    //     hourwise_string=d.popularity_by_hour.substring(1,d.popularity_by_hour.length-1);
+    //     if(metric==="visits")
+    //         hourwise_string=d.visits_by_day.substring(1,d.visits_by_day.length-1);
+    //     const hourwise_array = hourwise_string.split(",");
+    //     // pf.setStyle(
+    //     //     new ol.style.Style({
+    //     //         image: new ol.style.RegularShape({
+    //     //             radius: Math.pow((+hourwise_array[hour]+1),1/3),
+    //     //             points:3,
+    //     //             angle: 0,
+    //     //             stroke:new ol.style.Stroke({color: '#000'}),
+    //     //             fill: new ol.style.Fill({color: '#FFF'})
+    //     //         })
+    //     //     })
+    //     // )
+    //     //code to be copied end
+    //     //
+    //     // poi_features.push(pf);
+    //     try{features_arr[Math.floor(hourwise_array[hour]*(rows-1)/(maximum_visits))].push(pf);}
+    //     catch(err){
+    //         console.log(Math.floor(hourwise_array[hour]*(rows-1)/(maximum_visits)));
+    //     }
+    //     poi_array.push(hourwise_array[hour])
+    //     return 'circle';
+    // })
     if(poi_features.length===0) {
         console.log("aagaye yeh power rangersss");
         let thing=0;
@@ -397,10 +502,6 @@ function drawStations() {
                 if(metric==="hours")
                     hourwise_string=data1[thing]['popularity_by_hour'].substring(1,data1[thing]['popularity_by_hour'].length-1);
             const hourwise_array = hourwise_string.split(",");
-                try{features_arr[Math.floor(hourwise_array[hour]*(rows-1)/(maximum_visits))].push(pf);}
-                catch(err){
-                    console.log(Math.floor(hourwise_array[hour]*(rows-1)/(maximum_visits)));
-                }
             // pf.setStyle(
             //     new ol.style.Style({
             //         image: new ol.style.RegularShape({
@@ -413,8 +514,13 @@ function drawStations() {
             //     })
             // )
                 //code to be copied end
+                try{features_arr[Math.floor(hashed_poi_indices[hourwise_array[hour]]*(rows)/(poi_array.length+1))].push(pf);}
+                catch(err){
+                    console.log(Math.floor(hashed_poi_indices[hourwise_array[hour]]*(rows)/(poi_array.length+1)));
+                }
             poi_features.push(pf);
-    }}
+            }
+    }
     let poi_end = (new Date()).getTime();
     console.log("Time taken to add POI points to array was: "+(poi_end-poi_start)/1000+" seconds");
     let circ_start = (new Date()).getTime();
@@ -520,10 +626,15 @@ function drawStations() {
 
     let VectorSourcePoiGrouped=[];
     for (let i=0;i<rows;i++){
+        const clusterSource = new ol.source.Cluster({
+            distance:  30,
+            minDistance: 30,
+            source: new ol.source.Vector({
+                features:features_arr[i]
+            }),
+        })
        VectorSourcePoiGrouped.push(
-           new ol.source.Vector({
-               features:features_arr[i]
-           })
+           clusterSource
        )
     }
     const vectorSourcePoi = new ol.source.Vector({
@@ -550,6 +661,45 @@ function drawStations() {
     const vectorSourceE85 = new ol.source.Vector({
         features:e85_features
     });
+
+    const clusterSourceElec = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceElec,
+    });
+
+    const clusterSourceHy = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceHy,
+    });
+
+    const clusterSourceE85 = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceE85,
+    });
+
+    const clusterSourceBd = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceBd,
+    });
+    const clusterSourceLpg = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceLpg,
+    });
+    const clusterSourceLng = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceLng,
+    });
+    const clusterSourceCng = new ol.source.Cluster({
+        distance:  10,
+        minDistance: 10,
+        source: vectorSourceCng,
+    });
     const vectorLayerPoi = new ol.layer.Vector({
         source: vectorSourcePoi
     });
@@ -569,7 +719,7 @@ function drawStations() {
         }))
     }
     const vectorLayerCng = new ol.layer.Vector({
-        source: vectorSourceCng,
+        source: clusterSourceCng,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -578,7 +728,7 @@ function drawStations() {
         })
     });
     const vectorLayerLng = new ol.layer.Vector({
-        source: vectorSourceLng,
+        source: clusterSourceLng,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -587,7 +737,7 @@ function drawStations() {
         })
     });
     const vectorLayerHy = new ol.layer.Vector({
-        source: vectorSourceHy,
+        source: clusterSourceHy,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -596,7 +746,7 @@ function drawStations() {
         })
     });
     const vectorLayerBd = new ol.layer.Vector({
-        source: vectorSourceBd,
+        source: clusterSourceBd,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -605,7 +755,7 @@ function drawStations() {
         })
     });
     const vectorLayerE85 = new ol.layer.Vector({
-        source: vectorSourceE85,
+        source: clusterSourceE85,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -614,7 +764,7 @@ function drawStations() {
         })
     });
     const vectorLayerLpg = new ol.layer.Vector({
-        source: vectorSourceLpg,
+        source: clusterSourceLpg,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -623,7 +773,7 @@ function drawStations() {
         })
     });
     const vectorLayerElec = new ol.layer.Vector({
-        source: vectorSourceElec,
+        source: clusterSourceElec,
         style: new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 3,
@@ -631,12 +781,12 @@ function drawStations() {
             })
         })
     });
-    const layers=[
-        new ol.layer.Tile({
+    const layers=[shpLayer];
+        let osm=new ol.layer.Tile({
             source: new ol.source.OSM()
-        })
-    ];
-    layers.push(shpLayer);
+        });
+        osm.setOpacity(0.5);
+        layers.push(osm);
     for(let i=0;i<rows;i++){
         layers.push(VectorLayerPoiGrouped[i]);
     }
@@ -702,104 +852,105 @@ function drawStations() {
         console.log(evt.pointerEvent.clientX);
         feature_onClick = map.forEachFeatureAtPixel(evt.pixel, function (feature, vectorLayerPoi) {
             console.log(map.getView().getCenter());
+            console.log(feature.values_.features[0].values_.name);
             myExtent = map.getView().calculateExtent(map.getSize());
             zoom=map.getView().getZoom();
             center=map.getView().getCenter();
             let popup = document.getElementById("myPopup");
             let mainPopup = document.getElementById("popup");
             popup.classList.toggle("show");
-            console.log(data2Dict[feature.values_.city]['population']+feature.values_.city);
+            // console.log(data2Dict[feature.values_.city]['population']+feature.values_.city);
             console.log(evt.pixel_);
             let to_be_added="";
-            $('input:checkbox').each(function () {
-                if ($(this)[0].id === "population")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nPop: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "race")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nRace: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "age")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nAge: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "sex")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nSex: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "poverty")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nPvr: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "cancer")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nCancer Risk: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "food")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nFood Desert: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "unemployment")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nUnemployment: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "income")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nIncome: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "homeless")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nHomeless pct: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "housing")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nHousing Burden: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-            })
-            popup.innerHTML="Place Name: "+feature.values_.name+"\n"+to_be_added;
+            // $('input:checkbox').each(function () {
+            //     if ($(this)[0].id === "population")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nPop: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "race")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nRace: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "age")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nAge: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "sex")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nSex: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "poverty")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nPvr: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "cancer")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nCancer Risk: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "food")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nFood Desert: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "unemployment")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nUnemployment: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "income")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nIncome: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "homeless")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nHomeless pct: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "housing")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nHousing Burden: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            // })
+            popup.innerHTML="Place Name: "+feature.values_.features[0].values_.name;
             mainPopup.style.left=evt.pointerEvent.clientX-10+'px';
-            mainPopup.style.top=evt.pointerEvent.clientY+'px';
-            document.getElementById("Place_id").innerHTML=feature.values_.name;
-            document.getElementById("metric_value").innerHTML=Math.pow(feature.style_.image_.radius_,3);
+            mainPopup.style.top=evt.pointerEvent.clientY-100+'px';
+            document.getElementById("Place_id").innerHTML=feature.values_.features[0].values_.name;
+            //document.getElementById("metric_value").innerHTML=Math.pow(feature.style_.image_.radius_,3);
             return feature;
         });
     });
-     draw_bar_chart();
-     chnage_accumulate_year();
+    // draw_bar_chart();
+    // chnage_accumulate_year();
     let milliseconds_end = (new Date()).getTime();
     console.log("time taken was "+(milliseconds_end-milliseconds_start)/1000+" seconds!");
 }
@@ -1321,98 +1472,98 @@ function init_for_map(){
             let popup = document.getElementById("myPopup");
             let mainPopup = document.getElementById("popup");
             popup.classList.toggle("show");
-            console.log(data2Dict[feature.values_.city]['population']+feature.values_.city);
+            // console.log(data2Dict[feature.values_.city]['population']+feature.values_.city);
             console.log(evt.pixel_);
             let to_be_added="";
-            $('input:checkbox').each(function () {
-                if ($(this)[0].id === "population")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nPop: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "race")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nRace: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "age")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nAge: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "sex")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nSex: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "poverty")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nPvr: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "cancer")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nCancer Risk: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "food")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nFood Desert: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "unemployment")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nUnemployment: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "income")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nIncome: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "homeless")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nHomeless pct: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-                if ($(this)[0].id === "housing")
-                {
-                    {
-                        if($(this).is(':checked'))
-                            to_be_added=to_be_added+"\nHousing Burden: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
-                    }
-                }
-            })
-            popup.innerHTML="Place Name: "+feature.values_.name+"\n"+to_be_added;
+            // $('input:checkbox').each(function () {
+            //     if ($(this)[0].id === "population")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nPop: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "race")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nRace: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "age")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nAge: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "sex")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nSex: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "poverty")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nPvr: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "cancer")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nCancer Risk: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "food")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nFood Desert: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "unemployment")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nUnemployment: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "income")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nIncome: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "homeless")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nHomeless pct: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            //     if ($(this)[0].id === "housing")
+            //     {
+            //         {
+            //             if($(this).is(':checked'))
+            //                 to_be_added=to_be_added+"\nHousing Burden: "+data2Dict[feature.values_.city][$(this).val()]+"\n";
+            //         }
+            //     }
+            // })
+            popup.innerHTML="Place Name: "+feature.values_.features[0].values_.name;
             mainPopup.style.left=evt.pointerEvent.clientX-10+'px';
-            mainPopup.style.top=evt.pointerEvent.clientY+590+'px';
-            document.getElementById("Place_id").innerHTML=feature.values_.name;
-            document.getElementById("metric_value").innerHTML=Math.pow(feature.style_.image_.radius_,3);
+            mainPopup.style.top=evt.pointerEvent.clientY-100+'px';
+            document.getElementById("Place_id").innerHTML=feature.values_.features[0].values_.name;
+            //document.getElementById("metric_value").innerHTML=Math.pow(feature.style_.image_.radius_,3);
             return feature;
         });
     });
-    draw_bar_chart();
-    chnage_accumulate_year();
+    // draw_bar_chart();
+    // chnage_accumulate_year();
 }
 function init() {
     document.getElementById("poi_hour").defaultValue = "10";
@@ -1480,7 +1631,12 @@ d3.csv('data/laws.csv').then((data)=>{
     loadData_law(data);
 })
 
-init();
+function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
+sleep(5000).then(() => {
+    init();
+});
 
 $(document).ready(function () {
     //colors from the seaborn tab10 color pallette
